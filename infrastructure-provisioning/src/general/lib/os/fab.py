@@ -44,20 +44,22 @@ def ensure_pip(requisites):
 
 def install_pip2_pkg(requisites):
     status = list()
+    error = ""
     try:
         sudo('pip2 install -U pip setuptools')
         sudo('pip2 install -U pip --no-cache-dir')
         sudo('pip2 install --upgrade pip')
         for pip2_pkg in requisites:
             try:
-                sudo('pip2 install ' + pip2_pkg + ' --no-cache-dir')
-                res = sudo('pip2 freeze | grep ' + pip2_pkg)
+                with settings(hide('warnings', 'stdout'), warn_only=True):
+                    error = sudo('pip2 install {} --no-cache-dir > /dev/null'.format(pip2_pkg))
+                res = sudo('pip2 freeze | grep {}'.format(pip2_pkg))
                 ansi_escape = re.compile(r'\x1b[^m]*m')
                 ver = ansi_escape.sub('', res).split("\r\n")
                 version = [i for i in ver if pip2_pkg in i][0].split('==')[1]
                 status.append({"group": "pip2", "name": pip2_pkg, "version": version, "status": "installed"})
             except:
-                status.append({"group": "pip2", "name": pip2_pkg, "status": "failed", "error_message": ""})
+                status.append({"group": "pip2", "name": pip2_pkg, "status": "failed", "error_message": error})
         return status
     except:
         return "Fail to install pip2 packages"
@@ -65,6 +67,7 @@ def install_pip2_pkg(requisites):
 
 def install_pip3_pkg(requisites):
     status = list()
+    error = ""
     try:
         if not exists('/bin/pip3'):
             sudo('ln -s /bin/pip3.5 /bin/pip3')
@@ -73,14 +76,15 @@ def install_pip3_pkg(requisites):
         sudo('pip3 install --upgrade pip')
         for pip3_pkg in requisites:
             try:
-                sudo('pip3 install ' + pip3_pkg + ' --no-cache-dir')
-                res = sudo('pip3 freeze | grep ' + pip3_pkg)
+                with settings(hide('warnings', 'stdout'), warn_only=True):
+                    error = sudo('pip3 install {} --no-cache-dir > /dev/null'.format(pip3_pkg))
+                res = sudo('pip3 freeze | grep {}'.format(pip3_pkg))
                 ansi_escape = re.compile(r'\x1b[^m]*m')
                 ver = ansi_escape.sub('', res).split("\r\n")
                 version = [i for i in ver if pip3_pkg in i][0].split('==')[1]
                 status.append({"group": "pip3", "name": pip3_pkg, "version": version, "status": "installed"})
             except:
-                status.append({"group": "pip3", "name": pip3_pkg, "status": "failed", "error_message": ""})
+                status.append({"group": "pip3", "name": pip3_pkg, "status": "failed", "error_message": error})
         return status
     except:
         return "Fail to install pip3 packages"
