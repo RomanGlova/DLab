@@ -1,7 +1,7 @@
 [
   "pip2",
   "pip3",
-  "other",
+  "others",
   "os_pkg",
   "r_pkg"
 ]
