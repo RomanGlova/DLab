@@ -94,9 +94,10 @@ public class TestLibListStep extends TestLibStep {
             } else {
                 LOGGER.info("Found libraries for {} are {}", request, actualFoundLibs);
                 for (Map.Entry<String, String> entry : actualFoundLibs.entrySet()) {
-                    Assert.assertTrue(entry.getKey().startsWith(libToSearchData.getStartWith()),
+                    Assert.assertTrue(entry.getKey().toLowerCase().startsWith(libToSearchData.getStartWith().toLowerCase()),
                             String.format("Nor expected lib is found %s-%s", entry.getKey(), entry.getValue()));
                 }
+                LOGGER.info("Libraries are verified");
             }
 
         } else {
