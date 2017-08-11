@@ -22,7 +22,7 @@ ARG OS
 ARG CLOUD
 
 COPY openldap/fabfile.py /root/
-COPY openldap/scripts/openldap_prepare.py /root/scripts/openldap_prepare.py
+COPY general/scripts/${CLOUD}/openldap_* /root/scripts/
 COPY openldap/scripts/os/${OS}/openldap_install.py /root/scripts/openldap_install.py
 COPY openldap/scripts/openldap_configure.py /root/scripts/openldap_configure.py
 COPY openldap/scripts/openldap_terminate.py /root/scripts/openldap_terminate.py
