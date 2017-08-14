@@ -50,6 +50,7 @@ if __name__ == "__main__":
     openldap_conf['tag_name'] = openldap_conf['service_base_name'] + '-Tag'
     openldap_conf['bucket_name'] = (openldap_conf['service_base_name'] + "-" + os.environ['openldap_user_name'] + '-bucket').lower().replace('_', '-')
     openldap_conf['ssn_bucket_name'] = (openldap_conf['service_base_name'] + "-ssn-bucket").lower().replace('_', '-')
+    openldap_conf['ssn_hostname'] = os.environ['ssn_hostname']
     openldap_conf['shared_bucket_name'] = (openldap_conf['service_base_name'] + "-shared-bucket").lower().replace('_', '-')
     openldap_conf['role_name'] = openldap_conf['service_base_name'].lower().replace('-', '_') + "-" + os.environ['openldap_user_name'] + '-openldap-Role'
     openldap_conf['role_profile_name'] = openldap_conf['service_base_name'].lower().replace('-', '_') + "-" + os.environ['openldap_user_name'] + '-openldap-Profile'
