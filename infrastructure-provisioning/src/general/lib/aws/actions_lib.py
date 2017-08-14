@@ -170,9 +170,10 @@ def create_subnet(vpc_id, subnet, tag):
         traceback.print_exc(file=sys.stdout)
 
 
-def create_security_group(security_group_name, vpc_id, security_group_rules, egress, tag):
+def create_security_group(security_group_name, vpc_id, security_group_rules, egress, tag,
+                          sg_description='security_group_name'):
     ec2 = boto3.resource('ec2')
-    group = ec2.create_security_group(GroupName=security_group_name, Description='security_group_name', VpcId=vpc_id)
+    group = ec2.create_security_group(GroupName=security_group_name, Description=sg_description, VpcId=vpc_id)
     time.sleep(10)
     create_tag(group.id, tag)
     try:

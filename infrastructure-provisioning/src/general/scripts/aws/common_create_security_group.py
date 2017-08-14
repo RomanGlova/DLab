@@ -28,6 +28,7 @@ from botocore.exceptions import ClientError
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--name', type=str, default='')
+parser.add_argument('--description', type=str, default='security_group_name')
 parser.add_argument('--vpc_id', type=str, default='')
 parser.add_argument('--security_group_rules', type=str, default='[]')
 parser.add_argument('--egress', type=str, default='[]')
@@ -54,7 +55,7 @@ if __name__ == "__main__":
             security_group_id = get_security_group_by_name(args.name)
             if security_group_id == '':
                 print "Creating security group %s for vpc %s with tag %s." % (args.name, args.vpc_id, json.dumps(tag))
-                security_group_id = create_security_group(args.name, args.vpc_id, rules, egress, tag)
+                security_group_id = create_security_group(args.name, args.vpc_id, rules, egress, tag, args.description)
                 if nb_sg_id != '' and args.resource == 'edge':
                     print "Updating Notebook security group " + nb_sg_id
                     rule = {'IpProtocol': '-1', 'FromPort': -1, 'ToPort': -1,

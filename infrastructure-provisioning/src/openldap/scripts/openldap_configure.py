@@ -1,3 +1,4 @@
+#!/usr/bin/python
 # *****************************************************************************
 #
 # Copyright (c) 2017, EPAM SYSTEMS INC
@@ -18,18 +19,20 @@
 
 from fabric.api import *
 from fabric.contrib.files import exists
+from dlab.meta_lib import *
 import os
 import sys
 import hashlib
 
-ldap_host = os.environ['ldap_host']
-ldap_host_user = os.environ['ldap_host_user']
+ldap_host = get_instance_hostname(os.environ['conf_service_base_name'] + '-Tag',
+                                  os.environ['conf_service_base_name'] + '-openldap')
+ldap_host_user = os.environ['conf_os_user']
 ldap_adm_user = os.environ['ldap_adm_user']
 ldap_adm_pass = os.environ['ldap_adm_pass']
 ldap_domain = os.environ['ldap_domain'].replace('.', ',dc=')
 
 env['connection_attempts'] = 100
-env.key_filename = os.environ['key_filename']
+env.key_filename = '{}{}.pem'.format(os.environ['conf_key_dir'], os.environ['conf_key_name'])
 env.host_string = '{}@{}'.format(ldap_host_user, ldap_host)
 
 
@@ -48,53 +51,58 @@ def make_ldap_secret(password):
     return tagged_digest_salt
 
 
-def configure_openldap(os_user, ldap_adm_user, ldap_adm_pass, ldap_domain):
+def configure_openldap(os_user, adm_user, adm_pass, domain):
     if not exists('/home/' + os_user + '/.ensure_dir/openldap_configured'):
         try:
-            sudo('yum -y install openldap compat-openldap openldap-clients openldap-servers\ openldap-servers-sql '
-                 'openldap-devel')
-            sudo('systemctl start slapd.service')
-            sudo('systemctl enable slapd.service')
+            if os.environ['conf_os_family'] == 'debian':
+                olc_database = '{1}mdb'
+            if os.environ['conf_os_family'] == 'redhat':
+                olc_database = '{2}hdb'
             sudo('cat << EOF | ldapmodify -Y EXTERNAL -H ldapi://\n'
+                 'dn: olcDatabase=' + olc_database + ',cn=config\n'
                  'changetype: modify\n'
                  'replace: olcSuffix\n'
-                 'olcSuffix: dc=dlab,dc=' + ldap_domain + '\n\n'
-                 'dn: olcDatabase={2}hdb,cn=config\n'
+                 'olcSuffix: dc=dlab,dc=' + domain + '\n\n'
+                 'dn: olcDatabase=' + olc_database + ',cn=config\n'
                  'changetype: modify\n'
                  'replace: olcRootDN\n'
-                 'olcRootDN: cn=' + ldap_adm_user + ',dc=dlab,dc=' + ldap_domain + '\n\n'
-                 'dn: olcDatabase={2}hdb,cn=config\n'
+                 'olcRootDN: cn=' + adm_user + ',dc=dlab,dc=' + domain + '\n\n'
+                 'dn: olcDatabase=' + olc_database + ',cn=config\n'
                  'changetype: modify\n'
                  'replace: olcRootPW\n'
-                 'olcRootPW: ' + make_ldap_secret(ldap_adm_pass) + '\nEOF')
-            sudo('cat << EOF | ldapmodify -Y EXTERNAL -H ldapi://\n'
-                 'dn: olcDatabase={1}monitor,cn=config\n'
-                 'changetype: modify\n'
-                 'replace: olcAccess\n'
-                 'olcAccess: {0}to * by dn.base="gidNumber=0+uidNumber=0,cn=peercred,cn=external,cn=auth" read by '
-                 'dn.base="cn=' + ldap_adm_user + ',dc=dlab,dc=' + ldap_domain + '" read by * none\nEOF')
+                 'olcRootPW: ' + make_ldap_secret(adm_pass) + '\nEOF')
 
-            # Copy the sample database configuration file to /var/lib/ldap and update the file permissions.
-            sudo('cp /usr/share/openldap-servers/DB_CONFIG.example /var/lib/ldap/DB_CONFIG')
-            sudo('chown ldap:ldap /var/lib/ldap/*')
-
-            # Add the cosine and nis LDAP schemas.
-            sudo('ldapadd -Y EXTERNAL -H ldapi:/// -f /etc/openldap/schema/cosine.ldif')
-            sudo('ldapadd -Y EXTERNAL -H ldapi:/// -f /etc/openldap/schema/nis.ldif')
-            sudo('ldapadd -Y EXTERNAL -H ldapi:/// -f /etc/openldap/schema/inetorgperson.ldif')
-
-            sudo('cat << EOF | ldapadd -x -W -D "cn=' + ldap_adm_user + ',dc=dlab,dc=' + ldap_domain + '"\n'
-                 'dn: dc=dlab,dc=' + ldap_domain + '\n'
+            # Adding root entry
+            sudo('cat << EOF | ldapadd -x -w "' + adm_pass + '" -D "cn=' + adm_user + ',dc=dlab,dc=' + domain + '"\n'
+                 'dn: dc=dlab,dc=' + domain + '\n'
                  'dc: dlab\n'
+                 'o: dlab.' + os.environ['ldap_domain'] + ' LDAP Server\n'
+                 'description: Root entry for dlab.' + os.environ['ldap_domain'] + '\n'
                  'objectClass: top\n'
-                 'objectClass: domain\n\n'
-                 'dn: cn=' + ldap_adm_user + ',dc=dlab,dc=' + ldap_domain + '\n'
+                 'objectclass: dcObject\n'
+                 'objectclass: organization\nEOF')
+
+            # Adding organizationalUnit "People" to ldap
+            sudo('cat << EOF | ldapadd -x -w "' + adm_pass + '" -D "cn=' + adm_user + ',dc=dlab,dc=' + domain + '"\n'
+                 'dn: ou=People,dc=dlab,dc=' + domain + '\n'
+                 'objectClass: organizationalUnit\n'
+                 'ou: People\nEOF')
+
+            # Adding organizationalUnit "Groups" to ldap
+            sudo('cat << EOF | ldapadd -x -w "' + adm_pass + '" -D "cn=' + adm_user + ',dc=dlab,dc=' + domain + '"\n'
+                 'dn: ou=Groups,dc=dlab,dc=' + domain + '\n'
+                 'objectClass: organizationalUnit\n'
+                 'ou: Groups\nEOF')
+
+            sudo('cat << EOF | ldapadd -x -w "' + adm_pass + '" -D "cn=' + adm_user + ',dc=dlab,dc=' + domain + '"\n'
+                 'dn: cn=' + adm_user + ',dc=dlab,dc=' + domain + '\n'
                  'objectClass: organizationalRole\n'
-                 'cn: ' + ldap_adm_user + '\n'
+                 'cn: ' + adm_user + '\n'
                  'description: LDAP Manager\nEOF')
 
             sudo('ldapwhoami -H ldap:// -x')
             sudo('touch /home/{}/.ensure_dir/openldap_configured'.format(os_user))
+            print('OpenLDAP configured!')
         except:
             sys.exit(1)
     else:

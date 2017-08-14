@@ -51,6 +51,13 @@ if __name__ == "__main__":
 
         with open("/response/{}.json".format(os.environ['request_id']), 'w') as response_file:
             response_file.write(json.dumps(reply))
+
+    elif os.environ['conf_resource'] == 'openldap':
+        reply['response']['log'] = "/response/{}.log".format(os.environ['request_id'])
+
+        with open("/response/{}.json".format(os.environ['request_id']), 'w') as response_file:
+            response_file.write(json.dumps(reply))
+
     else:
         reply['response']['log'] = "/var/log/dlab/{0}/{0}_{1}_{2}.log".format(os.environ['conf_resource'],
                                                                               os.environ['edge_user_name'],

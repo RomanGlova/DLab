@@ -1,8 +1,7 @@
 #!/usr/bin/python
-
 # *****************************************************************************
 #
-# Copyright (c) 2016, EPAM SYSTEMS INC
+# Copyright (c) 2017, EPAM SYSTEMS INC
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -19,35 +18,29 @@
 # ******************************************************************************
 
 from fabric.api import *
-from fabric.contrib.files import exists
 from dlab.meta_lib import *
-import sys
 import os
+
+ssn_host = get_instance_hostname(os.environ['conf_service_base_name'] + '-Tag',
+                                 os.environ['conf_service_base_name'] + '-ssn')
 
 ldap_host = get_instance_hostname(os.environ['conf_service_base_name'] + '-Tag',
                                   os.environ['conf_service_base_name'] + '-openldap')
+
+ldap_domain = os.environ['ldap_domain'].replace('.', ',dc=')
 ldap_host_user = os.environ['conf_os_user']
+ldap_adm_user = 'cn=' + os.environ['ldap_adm_user'] + ',dc=dlab,dc=' + ldap_domain
+ldap_adm_pass = os.environ['ldap_adm_pass']
 
 env['connection_attempts'] = 100
 env.key_filename = '{}{}.pem'.format(os.environ['conf_key_dir'], os.environ['conf_key_name'])
-env.host_string = '{}@{}'.format(ldap_host_user, ldap_host)
+env.host_string = '{}@{}'.format(ldap_host_user, ssn_host)
 
+with cd('/opt/dlab/conf/'):
+    run('sed -i "s/LDAP_HOST/' + ldap_host + '/g" security.yml')
+    run('sed -i "s/LDAP_USER/' + ldap_adm_user + '/g" security.yml')
+    run("sed -i 's/LDAP_PASS/" + ldap_adm_pass + "/g' security.yml")
 
-def install_openldap(os_user):
-    if not exists('/home/' + os_user + '/.ensure_dir/openldap_ensured'):
-        try:
-            sudo('yum -y install openldap compat-openldap openldap-clients openldap-servers openldap-servers-sql '
-                 'openldap-devel')
-            sudo('systemctl start slapd.service')
-            sudo('systemctl enable slapd.service')
-            sudo('touch /home/{}/.ensure_dir/openldap_ensured'.format(os_user))
-        except:
-            sys.exit(1)
-    else:
-        try:
-            print('OpenLDAP already installed!')
-        except:
-            sys.exit(1)
-
-if __name__ == '__main__':
-    install_openldap(ldap_host_user)
+sudo('supervisorctl restart all')
+run('echo "SSN node: ' + ssn_host + ' configured to use OpenLdap node: ' + ldap_host + '"')
+print('SSN node: ' + ssn_host + ' configured to use OpenLdap node: ' + ldap_host)

@@ -20,21 +20,23 @@
 
 from fabric.api import *
 from fabric.contrib.files import exists
+from dlab.meta_lib import *
 import sys
 import os
 
-ldap_host = os.environ['ldap_host']
-ldap_host_user = os.environ['ldap_host_user']
+ldap_host = get_instance_hostname(os.environ['conf_service_base_name'] + '-Tag',
+                                  os.environ['conf_service_base_name'] + '-openldap')
+ldap_host_user = os.environ['conf_os_user']
 
 env['connection_attempts'] = 100
-env.key_filename = os.environ['key_filename']
+env.key_filename = '{}{}.pem'.format(os.environ['conf_key_dir'], os.environ['conf_key_name'])
 env.host_string = '{}@{}'.format(ldap_host_user, ldap_host)
 
 
 def install_openldap(os_user):
     if not exists('/home/' + os_user + '/.ensure_dir/openldap_ensured'):
         try:
-            sudo('RUN DEBIAN_FRONTEND=noninteractive apt-get install -y slapd ldap-utils')
+            sudo('apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install -y slapd ldap-utils')
             sudo('ufw allow ldap')
             sudo('touch /home/{}/.ensure_dir/openldap_ensured'.format(os_user))
         except:

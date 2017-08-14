@@ -38,11 +38,17 @@ parser.add_argument('--key_name', type=str, default='', help='Admin key name (WI
 parser.add_argument('--workspace_path', type=str, default='', help='Admin key name (WITHOUT ".pem")')
 parser.add_argument('--tag_resource_id', type=str, default='dlab', help='The name of user tag')
 parser.add_argument('--aws_account_id', type=str, default='', help='The ID of Amazon account')
-parser.add_argument('--aws_billing_bucket', type=str, default='', help='The name of S3 bucket where billing reports will be placed.')
-parser.add_argument('--aws_report_path', type=str, default='', help='The path to billing reports directory in S3 bucket')
+parser.add_argument('--aws_billing_bucket', type=str, default='',
+                    help='The name of S3 bucket where billing reports will be placed.')
+parser.add_argument('--aws_report_path', type=str, default='',
+                    help='The path to billing reports directory in S3 bucket')
 parser.add_argument('--action', required=True, type=str, default='', choices=['build', 'deploy', 'create', 'terminate'],
                     help='Available options: build, deploy, create, terminate'),
-parser.add_argument('--openldap', type=bool, default=False, help='If true, deploy OpenLDAP')
+parser.add_argument('--openldap', type=str, default='false', help='If true, deploy OpenLDAP')
+parser.add_argument('--ldap_adm_user', type=str, default='ldapadmin', help='LDAP admin username')
+parser.add_argument('--ldap_adm_pass', type=str, default='SuperLdapPass321!', help='LDAP admin password')
+parser.add_argument('--ldap_domain', type=str, default='example.com', help='LDAP domain')
+
 args = parser.parse_args()
 
 
@@ -67,7 +73,7 @@ def build_docker_images(args):
               '-t docker.dlab-base .'.format(args.os_family, args.cloud_provider))
         local('sudo docker build --build-arg OS={} --build-arg CLOUD={} --file ssn/Dockerfile '
               '-t docker.dlab-ssn .'.format(args.os_family, args.cloud_provider))
-        if args.openldap:
+        if eval(args.openldap):
             local('sudo docker build --build-arg OS={} --build-arg CLOUD={} --file openldap/Dockerfile '
                   '-t docker.dlab-openldap .'.format(args.os_family, args.cloud_provider))
 
@@ -105,20 +111,23 @@ def deploy_dlab(args):
                                                  args.access_key_id, args.secret_access_key, args.action,
                                                  args.tag_resource_id, args.aws_account_id, args.aws_billing_bucket,
                                                  args.aws_report_path))
-    if args.openldap:
+    if args.openldap.lower() == 'true':
         # Creating OpenLDAP node
         local('sudo docker run -i -v {0}{1}.pem:/root/keys/{1}.pem -v {2}/web_app:/root/web_app -e "conf_os_family={3}"'
-              ' -e "conf_cloud_provider={4}" -e "conf_resource=openldap" -e "aws_openldap_instance_size=t2.medium" '
-              '-e "aws_region={5}" -e "aws_vpc_id={6}" -e "aws_subnet_id={7}" -e "aws_security_groups_ids={8}" '
-              '-e "conf_key_name={1}" -e "conf_service_base_name={9}" -e "aws_access_key={10}" '
-              '-e "aws_secret_access_key={11}" -e "conf_tag_resource_id={13}" -e "aws_account_id={14}" '
-              '-e "aws_billing_bucket={15}" -e "aws_report_path={16}" '
-              'docker.dlab-openldap --action {12}'.format(args.key_path, args.key_name, args.workspace_path,
-                                                          args.os_family, args.cloud_provider, args.region, args.vpc_id,
-                                                          args.subnet_id, args.sg_ids, args.infrastructure_tag,
-                                                          args.access_key_id, args.secret_access_key, args.action,
-                                                          args.tag_resource_id, args.aws_account_id,
-                                                          args.aws_billing_bucket, args.aws_report_path))
+              ' -e "conf_cloud_provider={4}" -e "conf_resource=openldap" -e "aws_openldap_instance_size=t2.medium"'
+              ' -e "aws_region={5}" -e "aws_vpc_id={6}" -e "aws_subnet_id={7}" -e "aws_security_groups_ids={8}"'
+              ' -e "conf_key_name={1}" -e "conf_service_base_name={9}" -e "aws_access_key={10}"'
+              ' -e "aws_secret_access_key={11}" -e "conf_tag_resource_id={13}" -e "aws_account_id={14}"'
+              ' -e "aws_billing_bucket={15}" -e "aws_report_path={16}" -e "ssn_hostname=localhost"'
+              ' -e "ldap_adm_user={17}" -e "ldap_adm_pass={18}" -e "ldap_domain={19}"'
+              ' docker.dlab-openldap --action {12}'.format(args.key_path, args.key_name, args.workspace_path,
+                                                           args.os_family, args.cloud_provider, args.region,
+                                                           args.vpc_id, args.subnet_id, args.sg_ids,
+                                                           args.infrastructure_tag, args.access_key_id,
+                                                           args.secret_access_key, args.action, args.tag_resource_id,
+                                                           args.aws_account_id, args.aws_billing_bucket,
+                                                           args.aws_report_path, args.ldap_adm_user, args.ldap_adm_pass,
+                                                           args.ldap_domain))
 
 
 def terminate_dlab(args):
@@ -128,12 +137,6 @@ def terminate_dlab(args):
           'docker.dlab-ssn --action {6}'.
           format(args.key_path, args.key_name, args.region, args.infrastructure_tag, args.access_key_id,
                  args.secret_access_key, args.action))
-    if args.openldap:
-        local('sudo docker run -i -v {0}{1}.pem:/root/keys/{1}.pem -e "aws_region={2}" -e "conf_service_base_name={3}" '
-              '-e "conf_resource=openldap" -e "aws_access_key={4}" -e "aws_secret_access_key={5}" '
-              'docker.dlab-openldap --action {6}'.format(args.key_path, args.key_name, args.region,
-                                                         args.infrastructure_tag, args.access_key_id,
-                                                         args.secret_access_key, args.action))
 
 
 if __name__ == "__main__":

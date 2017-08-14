@@ -21,14 +21,12 @@ FROM docker.dlab-base:latest
 ARG OS
 ARG CLOUD
 
-COPY openldap/fabfile.py /root/
+COPY openldap/ /root/
 COPY general/scripts/${CLOUD}/openldap_* /root/scripts/
-COPY openldap/scripts/os/${OS}/openldap_install.py /root/scripts/openldap_install.py
-COPY openldap/scripts/openldap_configure.py /root/scripts/openldap_configure.py
-COPY openldap/scripts/openldap_terminate.py /root/scripts/openldap_terminate.py
+COPY openldap/scripts/os/${OS}/*.py /root/scripts/
 
-RUN chmod a+x /root/fabfile.py; \
-    chmod a+x /root/scripts/*
+RUN chmod a+x /root/*.py
+RUN chmod a+x /root/scripts/*.py
 
 RUN mkdir /project_tree
 COPY . /project_tree
