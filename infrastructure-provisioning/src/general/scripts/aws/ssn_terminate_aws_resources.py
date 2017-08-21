@@ -23,7 +23,6 @@ from dlab.actions_lib import *
 import boto3
 import argparse
 import sys
-import os
 from dlab.ssn_lib import *
 
 parser = argparse.ArgumentParser()
@@ -72,8 +71,7 @@ if __name__ == "__main__":
     try:
         remove_sgroups(args.nb_sg)
         remove_sgroups(args.edge_sg)
-        if os.environ['terminate_ldap'] == 'true':
-            remove_sgroups(args.openldap_sg)
+        remove_sgroups(args.openldap_sg)
         try:
             remove_sgroups(args.tag_name)
         except:

@@ -55,7 +55,6 @@ if __name__ == "__main__":
     openldap_conf['sg_ids'] = os.environ['aws_security_groups_ids']
     openldap_conf['instance_name'] = openldap_conf['service_base_name'] + '-openldap'
     openldap_conf['tag_name'] = openldap_conf['service_base_name'] + '-Tag'
-    openldap_conf['ssn_hostname'] = os.environ['ssn_hostname']
     openldap_conf['policy_name'] = openldap_conf['service_base_name'].lower().replace('-', '_') + '-openldap-Policy'
     openldap_conf['openldap_security_group_name'] = openldap_conf['instance_name'] + '-SG'
     openldap_conf['private_subnet_prefix'] = os.environ['aws_private_subnet_prefix']
@@ -184,7 +183,8 @@ if __name__ == "__main__":
     try:
         logging.info('[CREATE OPENLDAP INSTANCE]')
         print '[CREATE openldap INSTANCE]'
-        openldap_group_id = check_security_group(openldap_conf['openldap_security_group_name'])
+        openldap_group_id = openldap_conf['sg_ids'] + ',' + \
+                            check_security_group(openldap_conf['openldap_security_group_name'])
         params = "--node_name {} --ami_id {} --instance_type {} --key_name {} --security_group_ids {} \
                  --subnet_id {} --infra_tag_name {} --instance_class {} \
                  --infra_tag_value {}".format(openldap_conf['instance_name'], openldap_conf['ami_id'],
