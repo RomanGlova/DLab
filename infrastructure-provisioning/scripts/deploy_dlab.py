@@ -132,11 +132,16 @@ def deploy_dlab(args):
 
 def terminate_dlab(args):
     # Dropping Dlab environment with selected infrastructure tag
+    if args.openldap.lower() == 'true':
+        terminate_ldap = args.openldap.lower()
+    else:
+        terminate_ldap = 'false'
+
     local('sudo docker run -i -v {0}{1}.pem:/root/keys/{1}.pem -e "aws_region={2}" -e "conf_service_base_name={3}" '
-          '-e "conf_resource=ssn" -e "aws_access_key={4}" -e "aws_secret_access_key={5}" '
-          'docker.dlab-ssn --action {6}'.
+          '-e "conf_resource=ssn" -e "aws_access_key={4}" -e "aws_secret_access_key={5}" -e "terminate_ldap={6}"'
+          'docker.dlab-ssn --action {7}'.
           format(args.key_path, args.key_name, args.region, args.infrastructure_tag, args.access_key_id,
-                 args.secret_access_key, args.action))
+                 args.secret_access_key, terminate_ldap, args.action))
 
 
 if __name__ == "__main__":

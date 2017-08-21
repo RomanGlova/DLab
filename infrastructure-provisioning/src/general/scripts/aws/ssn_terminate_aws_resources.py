@@ -23,12 +23,14 @@ from dlab.actions_lib import *
 import boto3
 import argparse
 import sys
+import os
 from dlab.ssn_lib import *
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--tag_name', type=str)
 parser.add_argument('--nb_sg', type=str)
 parser.add_argument('--edge_sg', type=str)
+parser.add_argument('--openldap_sg', type=str)
 parser.add_argument('--service_base_name', type=str)
 args = parser.parse_args()
 
@@ -70,6 +72,8 @@ if __name__ == "__main__":
     try:
         remove_sgroups(args.nb_sg)
         remove_sgroups(args.edge_sg)
+        if os.environ['terminate_ldap'] == 'true':
+            remove_sgroups(args.openldap_sg)
         try:
             remove_sgroups(args.tag_name)
         except:
