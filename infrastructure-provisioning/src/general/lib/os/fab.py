@@ -297,10 +297,17 @@ def ensure_ciphers():
     sudo('echo -e "\tKexAlgorithms curve25519-sha256@libssh.org,diffie-hellman-group-exchange-sha256" >> /etc/ssh/ssh_config')
     sudo('echo -e "\tCiphers aes256-gcm@openssh.com,aes128-gcm@openssh.com,chacha20-poly1305@openssh.com,aes256-ctr,aes192-ctr,aes128-ctr" >> /etc/ssh/ssh_config')
     try:
-        sudo('service ssh restart')
+        if os.environ['conf_os_family'] == 'debian':
+            ssh_service_name = 'ssh'
+        elif os.environ['conf_os_family'] == 'redhat':
+            ssh_service_name = 'sshd'
+        else:
+            print('Unknown conf_os_family, will use ssh service name "sshd"')
+            ssh_service_name = 'sshd'
+        sudo('service ' + ssh_service_name + ' restart')
     except:
-        sudo('service sshd restart')
-
+        print('ERROR: Unable to restart ssh service!')
+        sys.exit(1)
 
 def installing_python(region, bucket, user_name, cluster_name, application='', pip_mirror=''):
     get_cluster_python_version(region, bucket, user_name, cluster_name)
