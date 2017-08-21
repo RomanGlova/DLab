@@ -2,7 +2,7 @@
 
 # *****************************************************************************
 #
-# Copyright (c) 2016, EPAM SYSTEMS INC
+# Copyright (c) 2017, EPAM SYSTEMS INC
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -56,9 +56,6 @@ if __name__ == "__main__":
     openldap_conf['instance_name'] = openldap_conf['service_base_name'] + '-openldap'
     openldap_conf['tag_name'] = openldap_conf['service_base_name'] + '-Tag'
     openldap_conf['ssn_hostname'] = os.environ['ssn_hostname']
-    openldap_conf['role_name'] = openldap_conf['service_base_name'].lower().replace('-', '_') + '-openldap-Role'
-    openldap_conf['role_profile_name'] = openldap_conf['service_base_name'].lower().replace('-', '_') + \
-                                         '-openldap-Profile'
     openldap_conf['policy_name'] = openldap_conf['service_base_name'].lower().replace('-', '_') + '-openldap-Policy'
     openldap_conf['openldap_security_group_name'] = openldap_conf['instance_name'] + '-SG'
     openldap_conf['private_subnet_prefix'] = os.environ['aws_private_subnet_prefix']
@@ -90,21 +87,6 @@ if __name__ == "__main__":
     tag = {"Key": openldap_conf['tag_name'], "Value": "{}-subnet".format(openldap_conf['service_base_name'])}
     openldap_conf['private_subnet_cidr'] = get_subnet_by_tag(tag)
     print 'NEW SUBNET CIDR CREATED: {}'.format(openldap_conf['private_subnet_cidr'])
-
-    try:
-        logging.info('[CREATE OPENLDAP ROLES]')
-        print '[CREATE OPENLDAP ROLES]'
-        params = "--role_name {} --role_profile_name {} --policy_name {} --region {}" \
-            .format(openldap_conf['role_name'], openldap_conf['role_profile_name'],
-                    openldap_conf['policy_name'], os.environ['aws_region'])
-        try:
-            local("~/scripts/{}.py {}".format('common_create_role_policy', params))
-        except:
-            traceback.print_exc()
-            raise Exception
-    except Exception as err:
-        append_result("Failed to creating roles.", str(err))
-        sys.exit(1)
 
     try:
         logging.info('[CREATE SECURITY GROUP FOR OPENLDAP NODE]')
@@ -197,7 +179,6 @@ if __name__ == "__main__":
             print 'Waiting for changes to propagate'
             time.sleep(10)
     except:
-        remove_all_iam_resources('openldap')
         sys.exit(1)
 
     try:
@@ -205,12 +186,11 @@ if __name__ == "__main__":
         print '[CREATE openldap INSTANCE]'
         openldap_group_id = check_security_group(openldap_conf['openldap_security_group_name'])
         params = "--node_name {} --ami_id {} --instance_type {} --key_name {} --security_group_ids {} \
-                 --subnet_id {} --iam_profile {} --infra_tag_name {} \
+                 --subnet_id {} --infra_tag_name {} \
                  --infra_tag_value {}".format(openldap_conf['instance_name'], openldap_conf['ami_id'],
                                               openldap_conf['instance_size'], openldap_conf['key_name'],
                                               openldap_group_id, openldap_conf['public_subnet_id'],
-                                              openldap_conf['role_profile_name'], openldap_conf['tag_name'],
-                                              openldap_conf['instance_name'])
+                                              openldap_conf['tag_name'], openldap_conf['instance_name'])
         try:
             local("~/scripts/{}.py {}".format('common_create_instance', params))
         except:
@@ -219,7 +199,6 @@ if __name__ == "__main__":
 
     except Exception as err:
         append_result("Failed to create instance.", str(err))
-        remove_all_iam_resources(os.environ['conf_resource'])
         remove_sgroups(openldap_conf['instance_name'])
         sys.exit(1)
 
@@ -246,14 +225,4 @@ if __name__ == "__main__":
     except Exception as err:
         append_result("Failed creating ssh user 'dlab'.", str(err))
         remove_ec2(openldap_conf['tag_name'], openldap_conf['instance_name'])
-        remove_all_iam_resources(os.environ['conf_resource'])
-#         if pre_defined_sg:
-#            remove_sgroups(tag_name)
-#        if pre_defined_subnet:
-#            remove_internet_gateways(os.environ['aws_vpc_id'], tag_name, service_base_name)
-#            remove_subnets(service_base_name + "-subnet")
-#        if pre_defined_vpc:
-#            remove_vpc_endpoints(os.environ['aws_vpc_id'])
-#            remove_route_tables(tag_name, True)
-#            remove_vpc(os.environ['aws_vpc_id'])
         sys.exit(1)
