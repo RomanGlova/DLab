@@ -236,6 +236,14 @@ def create_instance(definitions, instance_tag, primary_disk_size=12):
                                              SubnetId=definitions.subnet_id,
                                              IamInstanceProfile={'Name': definitions.iam_profile},
                                              UserData=user_data)
+
+        elif definitions.instance_class == 'openldap':
+            instances = ec2.create_instances(ImageId=definitions.ami_id, MinCount=1, MaxCount=1,
+                                             KeyName=definitions.key_name,
+                                             SecurityGroupIds=security_groups_ids,
+                                             InstanceType=definitions.instance_type,
+                                             SubnetId=definitions.subnet_id,
+                                             UserData=user_data)
         else:
             get_iam_profile(definitions.iam_profile)
             instances = ec2.create_instances(ImageId=definitions.ami_id, MinCount=1, MaxCount=1,

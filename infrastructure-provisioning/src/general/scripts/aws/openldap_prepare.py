@@ -186,11 +186,12 @@ if __name__ == "__main__":
         print '[CREATE openldap INSTANCE]'
         openldap_group_id = check_security_group(openldap_conf['openldap_security_group_name'])
         params = "--node_name {} --ami_id {} --instance_type {} --key_name {} --security_group_ids {} \
-                 --subnet_id {} --infra_tag_name {} \
+                 --subnet_id {} --infra_tag_name {} --instance_class {} \
                  --infra_tag_value {}".format(openldap_conf['instance_name'], openldap_conf['ami_id'],
                                               openldap_conf['instance_size'], openldap_conf['key_name'],
                                               openldap_group_id, openldap_conf['public_subnet_id'],
-                                              openldap_conf['tag_name'], openldap_conf['instance_name'])
+                                              openldap_conf['tag_name'], openldap_conf['service_base_name'], 
+                                              openldap_conf['instance_name'])
         try:
             local("~/scripts/{}.py {}".format('common_create_instance', params))
         except:
