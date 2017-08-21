@@ -22,6 +22,7 @@ ARG OS
 ARG CLOUD
 
 COPY ssn/ /root/
+COPY openldap/scripts/openldap_configure_ssn.py /root/scripts/
 COPY general/scripts/${CLOUD}/ssn_* /root/scripts/
 COPY general/lib/os/${OS}/ssn_lib.py /usr/lib/python2.7/dlab/ssn_lib.py
 COPY general/files/${CLOUD}/ssn_instance_shapes.lst /root/files/

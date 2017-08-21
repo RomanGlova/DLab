@@ -24,8 +24,11 @@ import os
 ssn_host = get_instance_hostname(os.environ['conf_service_base_name'] + '-Tag',
                                  os.environ['conf_service_base_name'] + '-ssn')
 
-ldap_host = get_instance_hostname(os.environ['conf_service_base_name'] + '-Tag',
-                                  os.environ['conf_service_base_name'] + '-openldap')
+if os.environ['deploy_ldap'].lower() == 'false':
+    ldap_host = os.environ['ldap_host']
+else:
+    ldap_host = get_instance_hostname(os.environ['conf_service_base_name'] + '-Tag',
+                                      os.environ['conf_service_base_name'] + '-openldap')
 
 ldap_domain = os.environ['ldap_domain'].replace('.', ',dc=')
 ldap_host_user = os.environ['conf_os_user']

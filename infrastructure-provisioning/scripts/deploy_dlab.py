@@ -48,6 +48,7 @@ parser.add_argument('--openldap', type=str, default='false', help='If true, depl
 parser.add_argument('--ldap_adm_user', type=str, default='ldapadmin', help='LDAP admin username')
 parser.add_argument('--ldap_adm_pass', type=str, default='SuperLdapPass321!', help='LDAP admin password')
 parser.add_argument('--ldap_domain', type=str, default='example.com', help='LDAP domain')
+parser.add_argument('--ldap_host', type=str, default='ldap.example.com', help='LDAP host')
 
 args = parser.parse_args()
 
@@ -104,13 +105,15 @@ def deploy_dlab(args):
           '-e "aws_ssn_instance_size=t2.medium" -e "aws_region={5}" -e "aws_vpc_id={6}" -e "aws_subnet_id={7}" '
           '-e "aws_security_groups_ids={8}" -e "conf_key_name={1}" -e "conf_service_base_name={9}" '
           '-e "aws_access_key={10}" -e "aws_secret_access_key={11}" -e "conf_tag_resource_id={13}" '
-          '-e "aws_account_id={14}" -e "aws_billing_bucket={15}" -e "aws_report_path={16}" '
+          '-e "aws_account_id={14}" -e "aws_billing_bucket={15}" -e "aws_report_path={16}" -e "deploy_ldap={17}" '
+          '-e "ldap_adm_user={18}" -e "ldap_adm_pass={19} -e "ldap_domain={20}" -e "ldap_host={21}" '
           'docker.dlab-ssn --action {12}'.format(args.key_path, args.key_name, args.workspace_path, args.os_family,
                                                  args.cloud_provider, args.region, args.vpc_id,
                                                  args.subnet_id, args.sg_ids, args.infrastructure_tag,
                                                  args.access_key_id, args.secret_access_key, args.action,
                                                  args.tag_resource_id, args.aws_account_id, args.aws_billing_bucket,
-                                                 args.aws_report_path))
+                                                 args.aws_report_path, args.openldap, args.ldap_adm_user,
+                                                 args.ldap_adm_pass, args.ldap_domain, args.ldap_host))
     if args.openldap.lower() == 'true':
         # Creating OpenLDAP node
         local('sudo docker run -i -v {0}{1}.pem:/root/keys/{1}.pem -v {2}/web_app:/root/web_app -e "conf_os_family={3}"'

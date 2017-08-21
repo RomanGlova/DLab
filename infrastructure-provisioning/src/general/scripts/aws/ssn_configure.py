@@ -253,6 +253,31 @@ if __name__ == "__main__":
             remove_vpc(os.environ['aws_vpc_id'])
         sys.exit(1)
 
+    if os.environ['deploy_ldap'].lower() == 'false':
+        try:
+            logging.info('[CONFIGURE SSN INSTANCE LDAP SETTINGS]')
+            print('[CONFIGURE SSN INSTANCE LDAP SETTINGS]')
+            try:
+                local("~/scripts/{}.py".format('openldap_configure_ssn'))
+            except:
+                traceback.print_exc()
+                raise Exception
+        except Exception as err:
+            append_result("Unable to configure LDAP settings for SSN instance.", str(err))
+            remove_ec2(tag_name, instance_name)
+            remove_all_iam_resources(instance)
+            remove_s3(instance)
+            if pre_defined_sg:
+                remove_sgroups(tag_name)
+            if pre_defined_subnet:
+                remove_internet_gateways(os.environ['aws_vpc_id'], tag_name, service_base_name)
+                remove_subnets(service_base_name + "-subnet")
+            if pre_defined_vpc:
+                remove_vpc_endpoints(os.environ['aws_vpc_id'])
+                remove_route_tables(tag_name, True)
+                remove_vpc(os.environ['aws_vpc_id'])
+            sys.exit(1)
+
     try:
         logging.info('[SUMMARY]')
         print('[SUMMARY]')
