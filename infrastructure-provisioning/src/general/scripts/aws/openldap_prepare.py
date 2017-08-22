@@ -94,9 +94,7 @@ if __name__ == "__main__":
             {
                 'PrefixListIds': [],
                 'FromPort': 22,
-                'IpRanges': [{'CidrIp': '64.121.228.5/32'},
-                             {'CidrIp': '35.166.222.81/32'},
-                             {'CidrIp': '{}/32'.format(openldap_conf['ssn_public_ip'])},
+                'IpRanges': [{'CidrIp': '{}/32'.format(openldap_conf['ssn_public_ip'])},
                              {'CidrIp': '{}/32'.format(openldap_conf['ssn_private_ip'])}
                              ],
                 'ToPort': 22,
@@ -107,8 +105,7 @@ if __name__ == "__main__":
             {
                 'PrefixListIds': [],
                 'FromPort': 389,
-                'IpRanges': [{'CidrIp': '64.121.228.5/32'},
-                             {'CidrIp': '{}/32'.format(openldap_conf['ssn_public_ip'])},
+                'IpRanges': [{'CidrIp': '{}/32'.format(openldap_conf['ssn_public_ip'])},
                              {'CidrIp': '{}/32'.format(openldap_conf['ssn_private_ip'])}
                              ],
                 'ToPort': 389,
@@ -121,8 +118,7 @@ if __name__ == "__main__":
             {
                 'PrefixListIds': [],
                 'FromPort': 22,
-                'IpRanges': [{'CidrIp': '64.121.228.5/32'},
-                             {'CidrIp': '{}/32'.format(openldap_conf['ssn_public_ip'])},
+                'IpRanges': [{'CidrIp': '{}/32'.format(openldap_conf['ssn_public_ip'])},
                              {'CidrIp': '{}/32'.format(openldap_conf['ssn_private_ip'])}
                              ],
                 'ToPort': 22,
@@ -151,9 +147,7 @@ if __name__ == "__main__":
             {
                 'PrefixListIds': [],
                 'FromPort': 389,
-                'IpRanges': [{'CidrIp': '64.121.228.5/32'},
-                             {'CidrIp': '35.166.222.81/32'},
-                             {'CidrIp': '{}/32'.format(openldap_conf['ssn_public_ip'])},
+                'IpRanges': [{'CidrIp': '{}/32'.format(openldap_conf['ssn_public_ip'])},
                              {'CidrIp': '{}/32'.format(openldap_conf['ssn_private_ip'])}
                              ],
                 'ToPort': 389,
