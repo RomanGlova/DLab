@@ -48,13 +48,21 @@ if __name__ == "__main__":
     openldap_conf['service_base_name'] = os.environ['conf_service_base_name']
     openldap_conf['key_name'] = os.environ['conf_key_name']
     openldap_conf['public_subnet_id'] = os.environ['aws_subnet_id']
-    openldap_conf['vpc_id'] = os.environ['aws_vpc_id']
+    openldap_conf['tag_name'] = openldap_conf['service_base_name'] + '-Tag'
+    try:
+        if os.environ['aws_vpc_id'] == '':
+            openldap_conf['vpc_id'] = get_vpc_by_tag(openldap_conf['tag_name'], openldap_conf['service_base_name'])
+        else:
+            openldap_conf['vpc_id'] = os.environ['aws_vpc_id']
+    except:
+        logging.info('[ERROR DETECTING VPC ID FOR OPENLDAP NODE]')
+        print '[ERROR DETECTING VPC ID FOR OPENLDAP NODE]'
+        sys.exit(1)
     openldap_conf['region'] = os.environ['aws_region']
     openldap_conf['ami_id'] = get_ami_id(os.environ['aws_' + os.environ['conf_os_family'] + '_ami_name'])
     openldap_conf['instance_size'] = os.environ['aws_openldap_instance_size']
     openldap_conf['sg_ids'] = os.environ['aws_security_groups_ids']
     openldap_conf['instance_name'] = openldap_conf['service_base_name'] + '-openldap'
-    openldap_conf['tag_name'] = openldap_conf['service_base_name'] + '-Tag'
     openldap_conf['policy_name'] = openldap_conf['service_base_name'].lower().replace('-', '_') + '-openldap-Policy'
     openldap_conf['openldap_security_group_name'] = openldap_conf['instance_name'] + '-SG'
     openldap_conf['private_subnet_prefix'] = os.environ['aws_private_subnet_prefix']
@@ -63,29 +71,39 @@ if __name__ == "__main__":
                                                              openldap_conf['service_base_name'] + '-ssn').get('Public')
     openldap_conf['ssn_private_ip'] = get_instance_ip_address(openldap_conf['tag_name'],
                                                               openldap_conf['service_base_name'] + '-ssn').get('Private')
+    try:
+        if os.environ['aws_subnet_id'] == '':
+            openldap_conf['public_subnet_id'] = get_subnet_by_tag(openldap_conf['tag_name'], True,
+                                                                  openldap_conf['vpc_id'])
+        else:
+            openldap_conf['public_subnet_id'] = os.environ['aws_subnet_id']
+    except:
+        logging.info('[ERROR DETECTING SUBNET ID FOR OPENLDAP NODE]')
+        print '[ERROR DETECTING SUBNET ID FOR OPENLDAP NODE]'
+        sys.exit(1)
 
     print "Will deploy ldap as following: " + \
           json.dumps(openldap_conf, sort_keys=True, indent=4, separators=(',', ': '))
     logging.info(json.dumps(openldap_conf))
 
-    try:
-        logging.info('[CREATE SUBNET]')
-        print '[CREATE SUBNET]'
-        params = "--vpc_id '{}' --infra_tag_name {} --infra_tag_value {} --prefix {}" \
-            .format(openldap_conf['vpc_id'], openldap_conf['tag_name'], openldap_conf['service_base_name'],
-                    openldap_conf['private_subnet_prefix'])
-        try:
-            local("~/scripts/{}.py {}".format('common_create_subnet', params))
-        except:
-            traceback.print_exc()
-            raise Exception
-    except Exception as err:
-        append_result("Failed to create subnet.", str(err))
-        sys.exit(1)
+#    try:
+#        logging.info('[CREATE SUBNET]')
+#        print '[CREATE SUBNET]'
+#        params = "--vpc_id '{}' --infra_tag_name {} --infra_tag_value {} --prefix {}" \
+#            .format(openldap_conf['vpc_id'], openldap_conf['tag_name'], openldap_conf['service_base_name'],
+#                    openldap_conf['private_subnet_prefix'])
+#        try:
+#            local("~/scripts/{}.py {}".format('common_create_subnet', params))
+#        except:
+#            traceback.print_exc()
+#            raise Exception
+#    except Exception as err:
+#        append_result("Failed to create subnet.", str(err))
+#        sys.exit(1)
 
-    tag = {"Key": openldap_conf['tag_name'], "Value": "{}-subnet".format(openldap_conf['service_base_name'])}
-    openldap_conf['private_subnet_cidr'] = get_subnet_by_tag(tag)
-    print 'NEW SUBNET CIDR CREATED: {}'.format(openldap_conf['private_subnet_cidr'])
+#    tag = {"Key": openldap_conf['tag_name'], "Value": "{}-subnet".format(openldap_conf['service_base_name'])}
+#    openldap_conf['private_subnet_cidr'] = get_subnet_by_tag(tag)
+#    print 'NEW SUBNET CIDR CREATED: {}'.format(openldap_conf['private_subnet_cidr'])
 
     try:
         logging.info('[CREATE SECURITY GROUP FOR OPENLDAP NODE]')
