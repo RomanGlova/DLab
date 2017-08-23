@@ -86,25 +86,6 @@ if __name__ == "__main__":
           json.dumps(openldap_conf, sort_keys=True, indent=4, separators=(',', ': '))
     logging.info(json.dumps(openldap_conf))
 
-#    try:
-#        logging.info('[CREATE SUBNET]')
-#        print '[CREATE SUBNET]'
-#        params = "--vpc_id '{}' --infra_tag_name {} --infra_tag_value {} --prefix {}" \
-#            .format(openldap_conf['vpc_id'], openldap_conf['tag_name'], openldap_conf['service_base_name'],
-#                    openldap_conf['private_subnet_prefix'])
-#        try:
-#            local("~/scripts/{}.py {}".format('common_create_subnet', params))
-#        except:
-#            traceback.print_exc()
-#            raise Exception
-#    except Exception as err:
-#        append_result("Failed to create subnet.", str(err))
-#        sys.exit(1)
-
-#    tag = {"Key": openldap_conf['tag_name'], "Value": "{}-subnet".format(openldap_conf['service_base_name'])}
-#    openldap_conf['private_subnet_cidr'] = get_subnet_by_tag(tag)
-#    print 'NEW SUBNET CIDR CREATED: {}'.format(openldap_conf['private_subnet_cidr'])
-
     try:
         logging.info('[CREATE SECURITY GROUP FOR OPENLDAP NODE]')
         print '[CREATE SECURITY GROUPS FOR OPENLDAP]'
