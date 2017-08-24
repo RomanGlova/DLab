@@ -38,6 +38,17 @@ def install_openldap(os_user):
         try:
             sudo('apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install -y slapd ldap-utils')
             sudo('ufw allow ldap')
+            sudo('ldapadd -Y EXTERNAL -H ldapi:/// -f /etc/ldap/schema/corba.ldif')
+            sudo('ldapadd -Y EXTERNAL -H ldapi:/// -f /etc/ldap/schema/cosine.ldif')
+            sudo('ldapadd -Y EXTERNAL -H ldapi:/// -f /etc/ldap/schema/duaconf.ldif')
+            sudo('ldapadd -Y EXTERNAL -H ldapi:/// -f /etc/ldap/schema/dyngroup.ldif')
+            sudo('ldapadd -Y EXTERNAL -H ldapi:/// -f /etc/ldap/schema/inetorgperson.ldif')
+            sudo('ldapadd -Y EXTERNAL -H ldapi:/// -f /etc/ldap/schema/java.ldif')
+            sudo('ldapadd -Y EXTERNAL -H ldapi:/// -f /etc/ldap/schema/misc.ldif')
+            sudo('ldapadd -Y EXTERNAL -H ldapi:/// -f /etc/ldap/schema/nis.ldif')
+            sudo('ldapadd -Y EXTERNAL -H ldapi:/// -f /etc/ldap/schema/openldap.ldif')
+            sudo('ldapadd -Y EXTERNAL -H ldapi:/// -f /etc/ldap/schema/ppolicy.ldif')
+            sudo('ldapadd -Y EXTERNAL -H ldapi:/// -f /etc/ldap/schema/collective.ldif')
             sudo('touch /home/{}/.ensure_dir/openldap_ensured'.format(os_user))
         except:
             sys.exit(1)
