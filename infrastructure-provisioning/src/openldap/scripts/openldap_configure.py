@@ -23,6 +23,7 @@ from dlab.meta_lib import *
 import os
 import sys
 import hashlib
+import uuid
 
 ldap_host = get_instance_hostname(os.environ['conf_service_base_name'] + '-Tag',
                                   os.environ['conf_service_base_name'] + '-openldap')
@@ -100,9 +101,49 @@ def configure_openldap(os_user, adm_user, adm_pass, domain):
                  'cn: ' + adm_user + '\n'
                  'description: LDAP Manager\nEOF')
 
+            # If defined, creating dlab users group and test user in ldap
+            if os.environ['ldap_test_user'].lower() == 'true':
+                # Adding Group
+                sudo('cat << EOF | ldapadd -x -w "' + adm_pass + '" -D "cn=' + adm_user + ',dc=dlab,dc=' + domain + '"\n'
+                     'dn: cn=dlab_users,ou=Groups,dc=dlab,dc=' + domain + '\n'
+                     'cn: dlab_users\n'
+                     'gidNumber: 5000\n'
+                     'objectclass: top\n'
+                     'objectclass: posixGroup\nEOF')
+                # Adding test user
+                user_pass = uuid.uuid4().hex
+                sudo('cat << EOF | ldapadd -x -w "' + adm_pass + '" -D "cn=' + adm_user + ',dc=dlab,dc=' + domain + '"\n'
+                     'dn: uid=dlab,ou=People,dc=dlab,dc=' + domain + '\n'
+                     'objectClass: shadowAccount\n'
+                     'objectClass: inetOrgPerson\n'
+                     'objectClass: top\n'
+                     'objectClass: posixAccount\n'
+                     'cn: Dlab User\n'
+                     'gidNumber: 5000\n'
+                     'homeDirectory: /home/dlab_user\n'
+                     'sn: User\n'
+                     'uid: dlab\n'
+                     'uidNumber: 52000\n'
+                     'displayName: Dlab User\n'
+                     'gecos: Dlab User\n'
+                     'givenName: Dlab\n'
+                     'loginShell: /bin/nologin\n'
+                     'mail: dlab@example.com\n'
+                     'shadowExpire: 99999\n'
+                     'shadowFlag: 0\n'
+                     'shadowInactive: 99999\n'
+                     'shadowLastChange: 12011\n'
+                     'shadowMax: 99999\n'
+                     'shadowMin: 0\n'
+                     'shadowWarning: 0\n'
+                     'userPassword: ' + make_ldap_secret(user_pass) + '\nEOF')
+
             sudo('ldapwhoami -H ldap:// -x')
             sudo('touch /home/{}/.ensure_dir/openldap_configured'.format(os_user))
             print('OpenLDAP configured!')
+            if os.environ['ldap_test_user'].lower() == 'true':
+                print('OpenLDAP test username: dlab')
+                print('OpenLDAP test password: ' + user_pass)
         except:
             sys.exit(1)
     else:
